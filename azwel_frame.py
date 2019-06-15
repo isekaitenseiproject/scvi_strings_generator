@@ -19,7 +19,11 @@ class StringsFinder:
     """ 
     def __init__(self, path):
         self.frame_rules = [10, 12]
-        self.df = pd.read_csv(path)
+        self.df = pd.DataFrame()
+
+        self.loadData(pd.read_csv(path))
+
+        
         self.columns = list(self.df.columns)
         self.frame_checks = [self.columns.index("Grd"), self.columns.index("NH"), self.columns.index("CH")]
         self.required_state = [self.columns.index("required_state")]
@@ -32,12 +36,16 @@ class StringsFinder:
         self.end = self.columns.index("end")
         self.sleep = self.columns.index("sleep")
         self.hit_type = self.columns.index("hit_type")
-        self.strings_list = pd.DataFrame([], columns=["command", "startup", "DMG" ,"GC", "direction", "height"])
+        self.strings_list = pd.DataFrame([], columns=["command", "state", "startup", "DMG" ,"GC", "direction", "height"])
         self.direction = self.columns.index("direction")
         self.height = self.columns.index("height")
         self.DMG = self.columns.index("DMG")
         self.GC = self.columns.index("GC")
+
         self.preprocess()
+
+    def loadData(self, data):
+        self.df = data
         
     def preprocess(self):
         """
@@ -68,16 +76,18 @@ class StringsFinder:
         direction = command_b[self.direction] + "," + command_a[self.direction]
         height = command_b[self.height] +"," + command_a[self.height]
         command = command_b[self.command] + "," + command_a[self.command]
-
+        state = self.columns[frame_check]
         #print(command, direction, height)
         
         if self.columns[frame_check] == "Grd":
             gc += command_b[self.GC]
         else:
             dmg += command_b[self.DMG]
-
-        row = pd.DataFrame([[command, cost, dmg, gc, direction, height]],
-                           columns=["command", "startup", "DMG" ,"GC", "direction", "height"])
+        
+        
+            
+        row = pd.DataFrame([[command, state, cost, dmg, gc, direction, height]],
+                           columns=["command", "state", "startup", "DMG" ,"GC", "direction", "height"])
 
         #print(row)
         self.strings_list = pd.concat([self.strings_list, row])
@@ -115,15 +125,24 @@ class StringsFinder:
         if command_a[self.required_state].required_state == "SC" and not SC:
             #print("adding inf")
             stances_cost += np.inf
+
+        if command_b[self.required_state].required_state == "SC" and not SC:
+            stances_cost += np.inf
             
-        
         elif command_a[self.required_state].required_state != command_b[self.end_state].end_state:
             if command_a[self.required_state].required_state in self.stances:
+                #print("cost 20")
                 stances_cost += 20
             elif command_b[self.end_state].end_state in self.stances:
+                #print("cost 40")
                 stances_cost += 40
-            if command_a[self.required_state].required_state in self.weapon_mode and command_b[self.end_state].end_state != "AM" and not SC:
-                stances_cost += np.inf
+            else:
+                ifWeaponMode = command_a[self.required_state].required_state in self.weapon_mode
+                ifAM = command_b[self.end_state].end_state != "AM"
+                ifnotSC = not SC
+                if ifWeaponMode and ifAM and ifnotSC:
+                    #print("no weapon equiped")
+                    stances_cost += np.inf
 
         elif command_a[self.first] is not command_b[self.end] and command_b[self.end] is not "AM" and not SC:
             stances_cost += 8
@@ -137,8 +156,10 @@ class StringsFinder:
         for i in range(len(self.df)):
             for j in range(len(self.df)):
                 self.generateString(self.df.loc[j], self.df.loc[i], verpose=False)
-    
+        self.strings_list.to_csv("azwel_strings.csv")
 
+
+                
 
 if __name__ == "__main__":
     stringFinder = StringsFinder("azwel_frame_data.csv")
