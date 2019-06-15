@@ -32,7 +32,11 @@ class StringsFinder:
         self.end = self.columns.index("end")
         self.sleep = self.columns.index("sleep")
         self.hit_type = self.columns.index("hit_type")
-        self.strings_list = []
+        self.strings_list = pd.DataFrame([], columns=["command", "startup", "DMG" ,"GC", "direction", "height"])
+        self.direction = self.columns.index("direction")
+        self.height = self.columns.index("height")
+        self.DMG = self.columns.index("DMG")
+        self.GC = self.columns.index("GC")
         self.preprocess()
         
     def preprocess(self):
@@ -57,6 +61,27 @@ class StringsFinder:
         else:
             rule = cost < f
             return rule
+
+    def addStrings(self, command_a, command_b, cost, frame_check):
+        dmg = 0
+        gc = 0
+        direction = command_b[self.direction] + "," + command_a[self.direction]
+        height = command_b[self.height] +"," + command_a[self.height]
+        command = command_b[self.command] + "," + command_a[self.command]
+
+        #print(command, direction, height)
+        
+        if self.columns[frame_check] == "Grd":
+            gc += command_b[self.GC]
+        else:
+            dmg += command_b[self.DMG]
+
+        row = pd.DataFrame([[command, cost, dmg, gc, direction, height]],
+                           columns=["command", "startup", "DMG" ,"GC", "direction", "height"])
+
+        #print(row)
+        self.strings_list = pd.concat([self.strings_list, row])
+        #print(self.strings_list)
                 
         
     def generateString(self, command_a, command_b, verpose=False):
@@ -67,26 +92,28 @@ class StringsFinder:
         for f in self.frame_rules:
             for t in self.frame_checks:
                 candidates = [int(i) for i in  command_b[t].split(",")] if isinstance(command_b[t], str) else [command_b[t]]
-                for candidate in candidates:
-                    cost = command_a[self.startup] + candidate + self.stancesCost(command_a, command_b)
+                for candidate in candidates:                    
+                    cost = self.calculateCost(command_a, command_b, candidate)
                     if self.validateCost(f, cost, command_a, command_b):
-                        self.strings_list.append([str(cost)+"F:",command_a[self.command], command_b[self.command]])
+                        self.addStrings(command_a, command_b, cost, t)
                         if verpose:
-                            print(str(cost)+"F " +  command_a[self.required_state].required_state + " "+ self.columns[t], command_a[self.command], command_b[self.command])
-                continue
+                            print(str(cost)+"F " +  command_a[self.required_state].required_state + " "+ self.columns[t], command_b[self.command], command_a[self.command])
                                                                             
-                    
+
+    def calculateCost(self, command_a, command_b, command_b_cost):
+        cost = command_a[self.startup] - command_b_cost + self.stancesCost(command_a, command_b)
+        return cost
         
+        
+                            
     def stancesCost(self, command_a, command_b, SC=False):
         """
         Calculating stances cost.
         """
-        
         stances_cost = 0
 
-
-        #print(command_a[self.required_state])
         if command_a[self.required_state].required_state == "SC" and not SC:
+            #print("adding inf")
             stances_cost += np.inf
             
         
@@ -109,7 +136,7 @@ class StringsFinder:
         """
         for i in range(len(self.df)):
             for j in range(len(self.df)):
-                self.generateString(self.df.loc[j], self.df.loc[i], verpose=True)
+                self.generateString(self.df.loc[j], self.df.loc[i], verpose=False)
     
 
 
