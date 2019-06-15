@@ -122,6 +122,8 @@ class StringsFinder:
         """
         stances_cost = 0
 
+
+        
         if command_a[self.required_state].required_state == "SC" and not SC:
             #print("adding inf")
             stances_cost += np.inf
@@ -144,8 +146,14 @@ class StringsFinder:
                     #print("no weapon equiped")
                     stances_cost += np.inf
 
-        elif command_a[self.first] is not command_b[self.end] and command_b[self.end] is not "AM" and not SC:
-            stances_cost += 8
+
+        
+        else:
+            weaponDifferent= command_a[self.first] != command_b[self.end]
+            isnotAM = command_b[self.end] != "AM"
+            isnotSC = not SC
+            if weaponDifferent and isnotAM and isnotSC:
+                stances_cost += 8
 
         return stances_cost
                 
