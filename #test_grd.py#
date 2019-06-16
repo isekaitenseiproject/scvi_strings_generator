@@ -9,12 +9,8 @@ class TestGrd(unittest.TestCase):
         columns_ = ["command", "required_state", "end_state", "first", "end", "startup", "Grd", "NH", "CH", "DMG", "GC","direction","height", "sleep", "hit_type", "attack_type"]
         f = 12
         excepted = False
-        B = 14
-        A = 0
-        twoA = 8
-        
-        command_b = FrameTest.df.loc[A]
-        command_a = FrameTest.df.loc[twoA]
+        command_b = FrameTest.df.loc[14]
+        command_a = FrameTest.df.loc[0]
         print(command_b["command"])
         print(command_a["command"])
         
@@ -25,13 +21,10 @@ class TestGrd(unittest.TestCase):
         
         actual_cost = command_a[columns_.index("startup")] - command_b[columns_.index("Grd")]
 
-        print(cost)
-        print(actual_cost)
-        
 
         excepted_stances = 0
         actual_stances = FrameTest.stancesCost(command_a, command_b)
-        #print(actual_stances)
+        print(actual_stances)
         
 
         FrameTest.generateString(command_a, command_b)

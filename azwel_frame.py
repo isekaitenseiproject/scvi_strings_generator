@@ -1,4 +1,4 @@
-# -*- coding : utf-8 -*-
+0# -*- coding : utf-8 -*-
 
 __author__  = "Isekai Tensei"
 __status__  = "alpha"
@@ -8,7 +8,7 @@ __date__    = "15 June 2019"
 
 import pandas as pd
 import numpy as np
-
+from tqdm import tqdm
 
 
 
@@ -70,16 +70,16 @@ class StringsFinder:
             rule = cost < f
             return rule
 
-    def addStrings(self, command_a, command_b, cost, frame_check):
+    def addStrings(self, command_a, command_b, cost, frame_type):
         dmg = 0
         gc = 0
         direction = command_b[self.direction] + "," + command_a[self.direction]
         height = command_b[self.height] +"," + command_a[self.height]
         command = command_b[self.command] + "," + command_a[self.command]
-        state = self.columns[frame_check]
+        state = self.columns[self.frame_checks[frame_type]]
         #print(command, direction, height)
         
-        if self.columns[frame_check] == "Grd":
+        if self.columns[self.frame_checks[frame_type]] == "Grd":
             gc += command_b[self.GC]
         else:
             dmg += command_b[self.DMG]
@@ -98,17 +98,33 @@ class StringsFinder:
         """
         Strings generator method.
         """
+        f = 12
+        command_b_frame =  command_b[self.frame_checks[0]:self.frame_checks[len(self.frame_checks)-1] +1]
+
+
+
         
-        for f in self.frame_rules:
-            for t in self.frame_checks:
-                candidates = [int(i) for i in  command_b[t].split(",")] if isinstance(command_b[t], str) else [command_b[t]]
-                for candidate in candidates:                    
-                    cost = self.calculateCost(command_a, command_b, candidate)
-                    if self.validateCost(f, cost, command_a, command_b):
-                        self.addStrings(command_a, command_b, cost, t)
-                        if verpose:
-                            print(str(cost)+"F " +  command_a[self.required_state].required_state + " "+ self.columns[t], command_b[self.command], command_a[self.command])
-                                                                            
+        candidates = [[int(i) for i in frame.split(",")] if type(frame) == str else [frame] for frame in command_b_frame]
+        
+        for i in range(len(candidates)):
+            cost = self.calculateCost(command_a, command_b, candidates[i])
+            is1st = False
+            is2nd = False
+            is1st = self.validateCost(f, cost[0], command_a, command_b)
+            if len(cost) > 1:
+                is2nd = self.validateCost(f, cost[1], command_a, command_b)
+            
+            if is1st:
+                self.addStrings(command_a, command_b, cost[0], i)
+                if verpose:
+                    print(str(cost[0])+"F " +  command_a[self.required_state].required_state + " "+ self.columns[t], command_b[self.command], command_a[self.command])
+            if is2nd:        
+                self.addStrings(command_a, command_b, cost[1], i)
+                if verpose:
+                    print(str(cost[1])+"F " +  command_a[self.required_state].required_state + " "+ self.columns[t], command_b[self.command], command_a[self.command])
+
+                            
+                            
 
     def calculateCost(self, command_a, command_b, command_b_cost):
         cost = command_a[self.startup] - command_b_cost + self.stancesCost(command_a, command_b)
@@ -161,7 +177,7 @@ class StringsFinder:
         """
         A method to search attack strings.
         """
-        for i in range(len(self.df)):
+        for i in tqdm(range(len(self.df))):
             for j in range(len(self.df)):
                 self.generateString(self.df.loc[j], self.df.loc[i], verpose=False)
         self.strings_list.to_csv("azwel_strings.csv")
