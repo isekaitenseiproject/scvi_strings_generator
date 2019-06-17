@@ -20,7 +20,7 @@ class StringsFinder:
     def __init__(self, path):
         self.frame_rules = [10, 12]
         self.df = pd.DataFrame()
-
+        
         self.loadData(pd.read_csv(path))
 
         
