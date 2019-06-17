@@ -11,8 +11,6 @@ import numpy as np
 from tqdm import tqdm
 
 
-
-
 class StringsFinder:
     """
     A Class for finding attack strings
@@ -60,6 +58,7 @@ class StringsFinder:
         """
         Cost validation method. When in combo status and attack strings
         """
+        print("hello")
         
         if cost <= 0:
             if command_b[self.hit_type] == "KND" or command_b[self.hit_type] == "STN":
@@ -101,12 +100,39 @@ class StringsFinder:
         """
         f = 12
         command_b_frame =  command_b[self.frame_checks[0]:self.frame_checks[len(self.frame_checks)-1] +1]        
-        candidates = np.array([[int(i) for i in frame.split(",")] if type(frame) == str else [frame] for frame in command_b_frame])
-        value = candidates + f
-        
-        indexs = list(map(lambda x:list(map(lambda y :abs(self.df_sorted['startup'] - y).idxmin(),x)),value))
+        frame_candidates = np.array([[int(i) for i in frame.split(",")] if type(frame) == str else [frame] for frame in command_b_frame])
+        frame_rules  = frame_candidates +  f
         
 
+        #extract which satisfies the strings rule
+        
+        candidates_all = list(map(lambda frame : list(map(lambda v : self.df[v >= self.df.startup], frame)), frame_rules))
+        #print(candidates_all[0][0][0])
+        for candidates in candidates_all:
+            for candidate in candidates:
+                if len(candidate) > 0:
+                    for i in range(len(candidate)):
+                        print(self.validateCost(f, candidate.loc[i]["startup"] + self.stancesCost(candidate.loc[i], command_b), candidate.loc[i], command_b))
+
+
+        #take candidates which satisfies the condition of stances cost
+        candidates_idx = list(map(
+            lambda candidates :
+            list(map(
+                lambda candidate :
+                list(filter(
+                    lambda i :
+                    self.validateCost(f, candidate.loc[i]["startup"] + self.stancesCost(candidate.loc[i], command_b), candidate.loc[i], command_b) 
+                    , range(len(candidate))
+                )) if len(candidate) > 0 else [] 
+                , candidates
+            )), candidates_all
+        ))
+
+
+        
+                        
+        
         command_a = np.array(list(
             map(lambda index : list(map(lambda idx : self.df_sorted.loc[idx], index))
                 ,indexs)
@@ -165,7 +191,7 @@ class StringsFinder:
         """
         stances_cost = 0
 
-
+        print(command_a)
         
         if command_a[self.required_state].required_state == "SC" and not SC:
             #print("adding inf")
@@ -212,7 +238,7 @@ class StringsFinder:
         #self.df_sorted["first"].cat.reorder_levels(weapon_mode_rules)
         self.df_sorted = self.df.sort_values(by=["startup", "required_state", "first"], ascending=True)
 
-        print(self.df_sorted)
+        #print(self.df_sorted)
         #print(self.df_sorted["required_state"].dtypes)
         
 
@@ -229,7 +255,7 @@ class StringsFinder:
 
         f  = 12
 
-        for i in tqdm(range(len(self.df))):
+        for i in range(len(self.df)):
             self.generateString(self.df.loc[i], verpose=True)
             
 
