@@ -20,6 +20,7 @@ class StringsFinder:
     def __init__(self, path):
         self.frame_rules = [10, 12]
         self.df = pd.DataFrame()
+        self.df_sorted = pd.DataFrame()
         
         self.loadData(pd.read_csv(path))
 
@@ -94,34 +95,60 @@ class StringsFinder:
         #print(self.strings_list)
                 
         
-    def generateString(self, command_a, command_b, verpose=False):
+    def generateString(self, command_b, verpose=False):
         """
         Strings generator method.
         """
         f = 12
-        command_b_frame =  command_b[self.frame_checks[0]:self.frame_checks[len(self.frame_checks)-1] +1]
-
-
-
+        command_b_frame =  command_b[self.frame_checks[0]:self.frame_checks[len(self.frame_checks)-1] +1]        
+        candidates = np.array([[int(i) for i in frame.split(",")] if type(frame) == str else [frame] for frame in command_b_frame])
+        value = candidates + f
         
-        candidates = [[int(i) for i in frame.split(",")] if type(frame) == str else [frame] for frame in command_b_frame]
+        indexs = list(map(lambda x:list(map(lambda y :abs(self.df_sorted['startup'] - y).idxmin(),x)),value))
         
-        for i in range(len(candidates)):
-            cost = self.calculateCost(command_a, command_b, candidates[i])
-            is1st = False
-            is2nd = False
-            is1st = self.validateCost(f, cost[0], command_a, command_b)
-            if len(cost) > 1:
-                is2nd = self.validateCost(f, cost[1], command_a, command_b)
+
+        command_a = np.array(list(
+            map(lambda index : list(map(lambda idx : self.df_sorted.loc[idx], index))
+                ,indexs)
+        ))
             
-            if is1st:
-                self.addStrings(command_a, command_b, cost[0], i)
-                if verpose:
-                    print(str(cost[0])+"F " +  command_a[self.required_state].required_state + " "+ self.columns[t], command_b[self.command], command_a[self.command])
-            if is2nd:        
-                self.addStrings(command_a, command_b, cost[1], i)
-                if verpose:
-                    print(str(cost[1])+"F " +  command_a[self.required_state].required_state + " "+ self.columns[t], command_b[self.command], command_a[self.command])
+        filter_index = list(range(len(command_a)))
+        #filter_index = filter(lambda comman : , command_a)
+        
+        
+
+        notfindBelow = value < self.df_sorted.loc[index]["startup"]
+            
+        while value < self.df_sorted.loc[index]["startup"] and index >= 0:
+            print("hello")
+            notfindBelow = value < self.df_sorted.loc[index]["startup"]
+            index -= 1
+
+
+                    
+        if notfindBelow:
+            pass
+            #continue
+
+            
+            #check stances cost(linear search)
+            while index > 0:
+                command_a = self.df_sorted.loc[index]
+                cost = self.calculateCost(command_a, command_b, candidates[i])
+                is1st = False
+                is2nd = False
+                is1st = self.validateCost(f, cost[0], command_a, command_b)
+                if len(cost) > 1:
+                    is2nd = self.validateCost(f, cost[1], command_a, command_b)
+            
+                if is1st:
+                    self.addStrings(command_a, command_b, cost[0], i)
+                    if verpose:
+                        print(str(cost[0])+"F " +  command_a[self.required_state].required_state + " "+ self.columns[t], command_b[self.command], command_a[self.command])
+                if is2nd:        
+                    self.addStrings(command_a, command_b, cost[1], i)
+                    if verpose:
+                        print(str(cost[1])+"F " +  command_a[self.required_state].required_state + " "+ self.columns[t], command_b[self.command], command_a[self.command])
 
                             
                             
@@ -172,14 +199,43 @@ class StringsFinder:
                 stances_cost += 8
 
         return stances_cost
-                
+
+
+    def sort(self):
+        self.df_sorted = self.df
+        required_state_rules = ["normal", "sword", "axe", "spear", "AM", "BoB", "ToW", "CoE", "SC"]
+        weapon_mode_rules = ["none", "sword", "axe", "spear", "AM"]
+
+        self.df_sorted["required_state"] = pd.Categorical(self.df_sorted.required_state, ordered=True, categories=required_state_rules)
+        self.df_sorted["first"] = pd.Categorical(self.df_sorted["first"], ordered=True, categories=weapon_mode_rules)
+        #self.df_sorted["required_state"].cat.reorder_levels(required_state_rules)
+        #self.df_sorted["first"].cat.reorder_levels(weapon_mode_rules)
+        self.df_sorted = self.df.sort_values(by=["startup", "required_state", "first"], ascending=True)
+
+        print(self.df_sorted)
+        #print(self.df_sorted["required_state"].dtypes)
+        
+
+        
+        
+    
     def search(self):
         """
         A method to search attack strings.
         """
+
+        #1. sort startup value
+        self.sort()
+
+        f  = 12
+
         for i in tqdm(range(len(self.df))):
-            for j in range(len(self.df)):
-                self.generateString(self.df.loc[j], self.df.loc[i], verpose=False)
+            self.generateString(self.df.loc[i], verpose=True)
+            
+
+            
+        #    for j in range(len(self.df)):
+        #        self.generateString(self.df.loc[j], self.df.loc[i], verpose=False)
         self.strings_list.to_csv("azwel_strings.csv")
 
 
