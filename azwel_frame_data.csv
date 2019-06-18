@@ -39,10 +39,10 @@ b4,normal,normal,sword,sword,16,-8,6,6,24,2,y,m,1,,
 1BB,normal,normal,spear,spear,18,-8,8,40,40,14,"y, y","l, h",1,STN,
 4B,normal,normal,spear,spear,28,4,8,8,30,15,y,m,0,,BA
 A+B,normal,normal,sword,none,42,12,38,38,32,15,y,m,1,STN,BA
-sword A+B,sword,sword,sword,none,34,12,38,38,32,15,y,m,1,STN,BA
-axe A+B,axe,axe,axe,none,42,8,38,38,40,25,y,m,1,STN,BA
-spear A+B,spear,spear,spear,none,42,8,38,38,24,15,y,m,1,STN,BA
-AM A+B,AM,AM,AM,none,42,8,38,38,32,15,y,m,1,STN,BA
+sword A+B,sword,normal,sword,none,34,12,38,38,32,15,y,m,1,STN,BA
+axe A+B,axe,normal,axe,none,42,8,38,38,40,25,y,m,1,STN,BA
+spear A+B,spear,normal,spear,none,42,8,38,38,24,15,y,m,1,STN,BA
+AM A+B,AM,normal,AM,none,42,8,38,38,32,15,y,m,1,STN,BA
 6A+B,normal,normal,none,AM,32,-6,42,42,46,9,y,m,0,STN,
 6A+B,SC,SC,none,AM,32,4,42,42,50,9,y,m,0,STN,BA
 2A+B,normal,normal,none,none,26,-12,8,10,0,0,x,l,1,,
@@ -50,9 +50,9 @@ AM A+B,AM,AM,AM,none,42,8,38,38,32,15,y,m,1,STN,BA
 8A+B,normal,normal,none,none,38,-22,13,13,30,9,y,m,1,,
 8A+B,SC,SC,none,none,38,-10,"32, 13","32, 13",31,15,x,m,1,KND,
 214A+B,normal,normal,none,none,62,13,13,13,45,0,y,m,0,F,UA
-sword B+K,sword,sword,sword,none,18,-20,"20,26","20, 26",40,14,y,m,0,F,
-axe B+K,axe,axe,axe,none,20,-24,13,13,60,4,x,l,1,,
-spear B+K,spear,spear,spear,none,24,-32,"10,14","10,14",64,10,"y, x, x","m,h,h",0,F,
+sword B+K,sword,normal,sword,none,18,-20,"20,26","20, 26",40,14,y,m,0,F,
+axe B+K,axe,normal,axe,none,20,-24,13,13,60,4,x,l,1,,
+spear B+K,spear,normal,spear,none,24,-32,"10,14","10,14",64,10,"y, x, x","m,h,h",0,F,
 A+B+K,normal,normal,sword,sword,14,-20,13,13,85,10,y,m,0,,
 6A+B+K,SC,normal,none,none,32,-30,13,13,139,1,x,m,1,,
 fcA,normal,normal,sword,sword,14,-10,2,2,16,2,x,sl,0,,
@@ -121,6 +121,6 @@ BB,CoE,CoE,spear,spear,26,-12,13,13,54,15,"y, y","m,m",0,,
 A+G,normal,normal,none,AM,18,0,13,13,54,0,x,h,0,,
 4A+G,normal,normal,none,AM,18,0,13,13,54,0,x,h,0,,
 BT A+G,normal,normal,none,AM,18,0,13,13,54,0,x,h,0,,
-A+G miss,normal,normal,none,AM,18,0,0,0,0,0,x,h,0,,
-4A+G miss,normal,normal,none,AM,18,0,0,0,0,0,x,h,0,,
-BT A+G miss,normal,normal,none,AM,18,0,0,0,0,0,x,h,0,,
+A+G miss,normal,normal,none,none,18,0,0,0,0,0,x,h,0,,
+4A+G miss,normal,normal,none,none,18,0,0,0,0,0,x,h,0,,
+BT A+G miss,normal,normal,none,none,18,0,0,0,0,0,x,h,0,,

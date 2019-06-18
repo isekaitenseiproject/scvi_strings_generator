@@ -1,4 +1,5 @@
-0# -*- coding : utf-8 -*-
+
+# -*- coding : utf-8 -*-
 
 __author__  = "Isekai Tensei"
 __status__  = "alpha"
@@ -40,7 +41,8 @@ class StringsFinder:
         self.height = self.columns.index("height")
         self.DMG = self.columns.index("DMG")
         self.GC = self.columns.index("GC")
-
+        self.sum_ = 0
+        
         self.preprocess()
 
     def loadData(self, data):
@@ -58,7 +60,6 @@ class StringsFinder:
         """
         Cost validation method. When in combo status and attack strings
         """
-        print("hello")
         
         if cost <= 0:
             if command_b[self.hit_type] == "KND" or command_b[self.hit_type] == "STN":
@@ -77,7 +78,6 @@ class StringsFinder:
         height = command_b[self.height] +"," + command_a[self.height]
         command = command_b[self.command] + "," + command_a[self.command]
         state = self.columns[self.frame_checks[frame_type]]
-        #print(command, direction, height)
         
         if self.columns[self.frame_checks[frame_type]] == "Grd":
             gc += command_b[self.GC]
@@ -89,9 +89,7 @@ class StringsFinder:
         row = pd.DataFrame([[command, state, cost, dmg, gc, direction, height]],
                            columns=["command", "state", "startup", "DMG" ,"GC", "direction", "height"])
 
-        #print(row)
         self.strings_list = pd.concat([self.strings_list, row])
-        #print(self.strings_list)
                 
         
     def generateString(self, command_b, verpose=False):
@@ -99,23 +97,49 @@ class StringsFinder:
         Strings generator method.
         """
         f = 12
-        command_b_frame =  command_b[self.frame_checks[0]:self.frame_checks[len(self.frame_checks)-1] +1]        
-        frame_candidates = np.array([[int(i) for i in frame.split(",")] if type(frame) == str else [frame] for frame in command_b_frame])
+        command_b_frame =  command_b[self.frame_checks[0]:self.frame_checks[len(self.frame_checks)-1] +1]
+        frame_candidates = np.array([np.array([int(i) for i in frame.split(",")]) if type(frame) == str else np.array([frame]) for frame in command_b_frame])
+        
+        
+        #print(frame_candidates)
+        #print(frame_candidates[0])
         frame_rules  = frame_candidates +  f
         
 
         #extract which satisfies the strings rule
         
-        candidates_all = list(map(lambda frame : list(map(lambda v : self.df[v >= self.df.startup], frame)), frame_rules))
-        #print(candidates_all[0][0][0])
-        for candidates in candidates_all:
-            for candidate in candidates:
-                if len(candidate) > 0:
-                    for i in range(len(candidate)):
-                        print(self.validateCost(f, candidate.loc[i]["startup"] + self.stancesCost(candidate.loc[i], command_b), candidate.loc[i], command_b))
+        candidates_all = list(map(lambda frame : list(map(lambda v : self.df_sorted[v >= self.df_sorted.startup], frame)), frame_rules))
+        #rename index
+        for i in range(len(candidates_all)):
+            for j in range(len(candidates_all[i])):
+                if len(candidates_all[i][j]) > 1:
+                    candidates_all[i][j].index = list(range(len(candidates_all[i][j])))
+        
 
-
+        
         #take candidates which satisfies the condition of stances cost
+        candidates_cond = []
+
+        for i in range(len(candidates_all)):
+            candidate_each = []
+            
+            for j in range(len(candidates_all[i])):
+                candidate_cond = []
+                if len(candidates_all[i][j]) > 0:
+                    cand_cond = []
+                    for k in range(len(candidates_all[i][j])):
+                        command_a = candidates_all[i][j].loc[k]
+                        cost = command_a["startup"] - frame_candidates[i][j] + self.stancesCost(command_a, command_b) 
+                        if self.validateCost(f, cost, command_a, command_b):
+                            cand_cond.append(command_a)
+                    candidate_cond.append(cand_cond)
+                candidate_each.append(candidate_cond)
+            candidates_cond.append(candidate_each)
+
+                
+        #print(candidates_cond)
+
+        """
         candidates_idx = list(map(
             lambda candidates :
             list(map(
@@ -128,55 +152,47 @@ class StringsFinder:
                 , candidates
             )), candidates_all
         ))
-
+        """
 
         
-                        
-        
-        command_a = np.array(list(
-            map(lambda index : list(map(lambda idx : self.df_sorted.loc[idx], index))
-                ,indexs)
-        ))
-            
-        filter_index = list(range(len(command_a)))
-        #filter_index = filter(lambda comman : , command_a)
-        
+
+        #flatten = lambda x: [z for y in x for z in (flatten(y) if hasattr(y, '__iter__') and not isinstance(y, str) else (y,))]
+        #self.sum_ += len(flatten(candidates_cond))
         
 
-        notfindBelow = value < self.df_sorted.loc[index]["startup"]
-            
-        while value < self.df_sorted.loc[index]["startup"] and index >= 0:
-            print("hello")
-            notfindBelow = value < self.df_sorted.loc[index]["startup"]
-            index -= 1
-
-
+        for i in range(len(candidates_cond)):
+            for j in range(len(candidates_cond[i])):
+                for k in range(len(candidates_cond[i][j])):
+                    if len(candidates_cond[i][j][k]) > 0:
+                        for l in range(len(candidates_cond[i][j][k])):
+                            #print(len(candidates_cond), len(frame_candidates))
+                            #print(candidates_cond, frame_candidates)
+                            command_a = candidates_cond[i][j][k][l]
+                            #print(command_a, type(command_a))
+                            cost = command_a["startup"] - frame_candidates[i][j] + self.stancesCost(command_a, command_b)
+                            self.addStrings(command_a, command_b, cost, i)
                     
-        if notfindBelow:
-            pass
-            #continue
+                    
+        """
+        for i in range(len(candidates_idx)):
+            for j in range(len(candidates_idx[i])):
+                if len(candidates_idx[i][j]) > 0:
+                    for k in range(len(candidates_idx[i][j])):
+                        command_a = candidates_all[i][j].loc[candidates_idx[i][j][k]]
+                        cost = command_a["startup"] - frame_candidates[i][j] + self.stancesCost(command_a, command_b)
+                        self.addStrings(candidates_all[i][j].loc[candidates_idx[i][j][k]], command_b, cost, i)
+        """
 
-            
-            #check stances cost(linear search)
-            while index > 0:
-                command_a = self.df_sorted.loc[index]
-                cost = self.calculateCost(command_a, command_b, candidates[i])
-                is1st = False
-                is2nd = False
-                is1st = self.validateCost(f, cost[0], command_a, command_b)
-                if len(cost) > 1:
-                    is2nd = self.validateCost(f, cost[1], command_a, command_b)
-            
-                if is1st:
-                    self.addStrings(command_a, command_b, cost[0], i)
-                    if verpose:
-                        print(str(cost[0])+"F " +  command_a[self.required_state].required_state + " "+ self.columns[t], command_b[self.command], command_a[self.command])
-                if is2nd:        
-                    self.addStrings(command_a, command_b, cost[1], i)
-                    if verpose:
-                        print(str(cost[1])+"F " +  command_a[self.required_state].required_state + " "+ self.columns[t], command_b[self.command], command_a[self.command])
+        """
+        for i in range(len(candidates_idx)):
+            for j in range(len(candidates_idx[i])):
+                if len(candidates_idx[i][j]) > 0:
+                    for k in range(len(candidates_idx[i][j])):
+                        command_a = candidates_all[i][j].loc[candidates_idx[i][j][k]]
+                        cost = command_a["startup"] - frame_candidates[i][j] + self.stancesCost(command_a, command_b)
+                        self.addStrings(candidates_all[i][j].loc[candidates_idx[i][j][k]], command_b, cost, i)
 
-                            
+        """
                             
 
     def calculateCost(self, command_a, command_b, command_b_cost):
@@ -190,8 +206,6 @@ class StringsFinder:
         Calculating stances cost.
         """
         stances_cost = 0
-
-        print(command_a)
         
         if command_a[self.required_state].required_state == "SC" and not SC:
             #print("adding inf")
@@ -215,7 +229,6 @@ class StringsFinder:
                     #print("no weapon equiped")
                     stances_cost += np.inf
 
-
         
         else:
             weaponDifferent= command_a[self.first] != command_b[self.end]
@@ -237,7 +250,8 @@ class StringsFinder:
         #self.df_sorted["required_state"].cat.reorder_levels(required_state_rules)
         #self.df_sorted["first"].cat.reorder_levels(weapon_mode_rules)
         self.df_sorted = self.df.sort_values(by=["startup", "required_state", "first"], ascending=True)
-
+        self.df_sorted.index = list(range(len(self.df_sorted)))
+        
         #print(self.df_sorted)
         #print(self.df_sorted["required_state"].dtypes)
         
@@ -255,13 +269,12 @@ class StringsFinder:
 
         f  = 12
 
-        for i in range(len(self.df)):
-            self.generateString(self.df.loc[i], verpose=True)
-            
-
+        for i in tqdm(range(len(self.df_sorted))):
+            self.generateString(self.df_sorted.loc[i], verpose=True)
             
         #    for j in range(len(self.df)):
         #        self.generateString(self.df.loc[j], self.df.loc[i], verpose=False)
+        self.strings_list.index = list(range(len(self.strings_list)))
         self.strings_list.to_csv("azwel_strings.csv")
 
 
@@ -271,4 +284,4 @@ if __name__ == "__main__":
     stringFinder = StringsFinder("azwel_frame_data.csv")
     stringFinder.search()
     print(len(stringFinder.strings_list))
-    
+  
